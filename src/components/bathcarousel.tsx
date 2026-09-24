@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styles from "./bathcarousel.module.css";
 
 export default function BathCarousel() {
     const [currentSlide, setCurrentSlide] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % 3);
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [currentSlide]);
 
     const currentBath = {
         water: 38.5,
@@ -30,90 +38,158 @@ export default function BathCarousel() {
             previousBath.energy) *
         100;
 
-    const slides = [
-        {
-            title: "Água",
-            value: currentBath.water,
-            cost: currentBath.waterCost,
-            duration: currentBath.duration,
-        },
-        {
-            title: "Energia",
-            value: currentBath.energy,
-            cost: currentBath.energyCost,
-            duration: currentBath.duration,
-        },
-        {
-            title: "Comparativo",
-            duration: currentBath.duration,
-        },
-    ];
-
     return (
         <div className={styles.carousel}>
             <div className={styles.card}>
                 <h2>Banho Atual</h2>
 
-                {currentSlide === 2 ? (
-                    <div>
-                        <h3>Comparativo</h3>
+                <div className={styles.viewport}>
+                    <div
+                        className={styles.slides}
+                        style={{
+                            transform: `translateX(-${currentSlide * 100}%)`,
+                        }}
+                    >
+                        {/* Slide Água */}
+                        <div className={styles.slide}>
+                            <h3>Água</h3>
 
-                        <p>Banho atual</p>
-                        <p>💧 {currentBath.water} L</p>
-                        <p>⚡ {currentBath.energy} kWh</p>
-
-                        <p>Banho anterior</p>
-                        <p>💧 {previousBath.water} L</p>
-                        <p>⚡ {previousBath.energy} kWh</p>
-
-                        <p>↓ {waterDifference.toFixed(1)}% de água</p>
-                        <p>↓ {energyDifference.toFixed(1)}% de energia</p>
-
-                        <p>⏱ {currentBath.duration}</p>
-                    </div>
-                ) : (
-                    <div className={styles.content}>
-                        <h3>{slides[currentSlide].title}</h3>
-
-                        <p className={styles.mainValue}>
-                            {currentSlide === 0
-                                ? `${currentBath.water} L`
-                                : `${currentBath.energy} kWh`}
-                        </p>
-
-                        <div className={styles.details}>
-                            <p>
-                                <span>R$</span> {currentSlide === 0
-                                    ? currentBath.waterCost.toFixed(2)
-                                    : currentBath.energyCost.toFixed(2)}
+                            <p className={styles.mainValue}>
+                                {currentBath.water} L
                             </p>
 
-                            <p>⏱ {slides[currentSlide].duration}</p>
+                            <div className={styles.details}>
+                                <p>
+                                    R$ {currentBath.waterCost.toFixed(2)}
+                                </p>
+
+                                <p>
+                                    ⏱ {currentBath.duration}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Slide Energia */}
+                        <div className={styles.slide}>
+                            <h3>Energia</h3>
+
+                            <p className={styles.mainValue}>
+                                {currentBath.energy} kWh
+                            </p>
+
+                            <div className={styles.details}>
+                                <p>
+                                    R$ {currentBath.energyCost.toFixed(2)}
+                                </p>
+
+                                <p>
+                                    ⏱ {currentBath.duration}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Slide Comparativo */}
+                        <div className={styles.slide}>
+                            <h3>Comparativo</h3>
+
+                            <div className={styles.comparison}>
+                                <div>
+                                    <strong>Banho atual</strong>
+
+                                    <p>
+                                        💧 {currentBath.water} L
+                                    </p>
+
+                                    <p>
+                                        ⚡ {currentBath.energy} kWh
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <strong>Banho anterior</strong>
+
+                                    <p>
+                                        💧 {previousBath.water} L
+                                    </p>
+
+                                    <p>
+                                        ⚡ {previousBath.energy} kWh
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className={styles.difference}>
+                                <p>
+                                    ↓ {waterDifference.toFixed(1)}% de água
+                                </p>
+
+                                <p>
+                                    ↓ {energyDifference.toFixed(1)}% de energia
+                                </p>
+                            </div>
+
+                            <p className={styles.duration}>
+                                ⏱ {currentBath.duration}
+                            </p>
                         </div>
                     </div>
-                )}
-
-                <div>
-                    <span>{currentSlide === 0 ? "●" : "○"}</span>
-                    <span>{currentSlide === 1 ? "●" : "○"}</span>
-                    <span>{currentSlide === 2 ? "●" : "○"}</span>
                 </div>
 
-                <button
-                    onClick={() =>
-                        setCurrentSlide((prev) => (prev - 1 + 3) % 3)
-                    }
-                >
-                    Anterior
-                </button>
+                <div className={styles.indicators}>
+                    <span
+                        className={
+                            currentSlide === 0
+                                ? styles.active
+                                : ""
+                        }
+                    >
+                        ●
+                    </span>
 
-                <button
-                    onClick={() =>
-                        setCurrentSlide((prev) => (prev + 1) % 3)
-                    }
-                >
-                    Próximo
-                </button>
+                    <span
+                        className={
+                            currentSlide === 1
+                                ? styles.active
+                                : ""
+                        }
+                    >
+                        ●
+                    </span>
+
+                    <span
+                        className={
+                            currentSlide === 2
+                                ? styles.active
+                                : ""
+                        }
+                    >
+                        ●
+                    </span>
+                </div>
+
+                <div className={styles.navigation}>
+                    <button
+                        className={styles.button}
+                        onClick={() =>
+                            setCurrentSlide(
+                                (prev) => (prev - 1 + 3) % 3
+                            )
+                        }
+                    >
+                        ← Anterior
+                    </button>
+
+                    <button
+                        className={styles.button}
+                        onClick={() =>
+                            setCurrentSlide(
+                                (prev) => (prev + 1) % 3
+                            )
+                        }
+                    >
+                        Próximo →
+                    </button>
+                </div>
             </div>
         </div>
     );
