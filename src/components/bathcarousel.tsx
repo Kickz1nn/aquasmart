@@ -90,6 +90,12 @@ export default function BathCarousel() {
                 </div>
             )}
 
+            <div>
+                <span>{currentSlide === 0 ? "●" : "○"}</span>
+                <span>{currentSlide === 1 ? "●" : "○"}</span>
+                <span>{currentSlide === 2 ? "●" : "○"}</span>
+            </div>
+
             <button
                 onClick={() =>
                     setCurrentSlide((prev) => (prev - 1 + 3) % 3)
