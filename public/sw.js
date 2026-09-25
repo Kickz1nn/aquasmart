@@ -1,21 +1,11 @@
 const CACHE_NAME = "aquasmart-v1";
 
-const APP_SHELL = [
-    "/",
-    "/access",
-    "/dashboard",
-    "/history",
-    "/settings",
-];
-
 self.addEventListener("install", (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(APP_SHELL);
-        })
-    );
-
     self.skipWaiting();
+
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+    );
 });
 
 self.addEventListener("activate", (event) => {
@@ -37,27 +27,17 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    const requestUrl = new URL(event.request.url);
+    const url = new URL(event.request.url);
 
-    if (requestUrl.origin !== self.location.origin) {
+    if (url.origin !== self.location.origin) {
         return;
     }
 
     event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                if (response.ok && response.type === "basic") {
-                    const responseClone = response.clone();
-
-                    caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseClone);
-                    });
-                }
-
-                return response;
-            })
-            .catch(() => {
-                return caches.match(event.request);
-            })
+        fetch(event.request, {
+            redirect: "follow",
+        }).catch(() => {
+            return caches.match(event.request);
+        })
     );
 });
