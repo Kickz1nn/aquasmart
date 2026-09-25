@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, type TouchEvent } from "react";
 import styles from "./bathcarousel.module.css";
 
 export default function BathCarousel() {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const touchStartX = useRef<number | null>(null);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -38,12 +39,37 @@ export default function BathCarousel() {
             previousBath.energy) *
         100;
 
+    function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
+        touchStartX.current = event.touches[0].clientX;
+    }
+
+    function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
+        if (touchStartX.current === null) return;
+
+        const touchEndX = event.changedTouches[0].clientX;
+        const distance = touchStartX.current - touchEndX;
+
+        const threshold = 50;
+
+        if (Math.abs(distance) >= threshold) {
+            if (distance > 0) {
+                // Arrastou para a esquerda
+                setCurrentSlide((prev) => (prev + 1) % 3);
+            } else {
+                // Arrastou para a direita
+                setCurrentSlide((prev) => (prev - 1 + 3) % 3);
+            }
+        }
+
+        touchStartX.current = null;
+    }
+
     return (
         <div className={styles.carousel}>
             <div className={styles.card}>
                 <h2>Banho Atual</h2>
 
-                <div className={styles.viewport}>
+                <div className={styles.viewport} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
                     <div
                         className={styles.slides}
                         style={{

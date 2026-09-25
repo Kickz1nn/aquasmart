@@ -24,13 +24,12 @@
     letter-spacing: 1.5px;
 }
 
-/* Área que mostra apenas um slide por vez */
 .viewport {
     width: 100%;
     overflow: hidden;
+    touch-action: pan-y; 
 }
 
-/* Faixa que contém os 3 slides */
 .slides {
     display: flex;
     width: 100%;
@@ -38,7 +37,6 @@
     transition: transform 0.6s ease-in-out;
 }
 
-/* Cada slide ocupa exatamente a largura do card */
 .slide {
     flex: 0 0 100%;
 
@@ -230,7 +228,7 @@
     }
 
     .navigation {
-        gap: 8px;
+        display: none;
     }
 
     .button {
