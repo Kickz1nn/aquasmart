@@ -1,13 +1,11 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
 import styles from "./access.module.css";
 
 const ACCESS_CODE = "231206";
 
 export default function Access() {
-    const router = useRouter();
     const [code, setCode] = useState("");
     const [message, setMessage] = useState("");
     const [isValid, setIsValid] = useState(false);
@@ -20,8 +18,8 @@ export default function Access() {
         setMessage(valid ? "Código confirmado. Vamos começar." : "Código incorreto. Tente novamente.");
 
         if (valid) {
-            document.cookie = "aquasmart_access=true; path=/; max-age=86400; samesite=lax";
-            router.replace("/");
+            document.cookie = "aquasmart_access=true; Path=/; Max-Age=86400; SameSite=Lax";
+            window.location.replace("/");
         }
     }
 
@@ -36,7 +34,7 @@ export default function Access() {
                 <p className={styles.eyebrow}>AquaSmart</p>
                 <h1 id="access-title">Bem-vindo</h1>
                 <p className={styles.description}>
-                    Insira seu código para começar a análise do seu consumo de água.
+                    Insira o código do produto para a visualização do seu consumo.
                 </p>
 
                 <form className={styles.form} onSubmit={handleSubmit}>
