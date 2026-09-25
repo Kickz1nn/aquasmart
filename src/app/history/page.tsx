@@ -1,5 +1,9 @@
+import HistoryList from "@/components/historylist";
+
 export default function History() {
     return (
-        <h1>AquaSmart Histórico</h1>
-    )
+        <main>
+            <HistoryList />
+        </main>
+    );
 }
