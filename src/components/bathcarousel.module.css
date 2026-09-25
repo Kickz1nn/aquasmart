@@ -173,3 +173,68 @@
     color: white;
     border-color: #127e83;
 }
+
+@media (max-width: 600px) {
+    .carousel {
+        width: calc(100% - 32px);
+        margin: 24px auto;
+    }
+
+    .card {
+        padding: 28px 20px;
+    }
+
+    .card h2 {
+        font-size: 13px;
+    }
+
+    .slide h3 {
+        margin-bottom: 18px;
+        font-size: 24px;
+    }
+
+    .mainValue {
+        margin: 16px 0;
+
+        font-size: 40px;
+    }
+
+    .details {
+        gap: 12px;
+    }
+
+    .details p {
+        width: auto;
+        font-size: 17px;
+    }
+
+    .comparison {
+        gap: 16px;
+    }
+
+    .comparison > div {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .comparison strong {
+        font-size: 14px;
+    }
+
+    .comparison p {
+        font-size: 14px;
+    }
+
+    .difference p {
+        font-size: 14px;
+    }
+
+    .navigation {
+        gap: 8px;
+    }
+
+    .button {
+        padding: 9px 12px;
+        font-size: 13px;
+    }
+}

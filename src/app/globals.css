@@ -49,3 +49,30 @@ nav a:hover {
   background-color: #1e293b;
   color: white;
 }
+
+@media (max-width: 600px) {
+  nav {
+    height: auto;
+    min-height: 70px;
+
+    flex-direction: column;
+    justify-content: center;
+
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  nav ul {
+    width: 100%;
+
+    justify-content: center;
+    flex-wrap: wrap;
+
+    gap: 4px;
+  }
+
+  nav a {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+}

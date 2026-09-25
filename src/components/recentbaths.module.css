@@ -80,6 +80,7 @@
 
 @media (max-width: 520px) {
     .container {
+        width: calc(100% - 32px);
         margin-top: 24px;
     }
 
