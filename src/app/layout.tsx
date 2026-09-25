@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navbar";
+import ServiceWorkerRegistration from "@/components/serviceworkerregistration";
 
 export const metadata: Metadata = {
   title: "AquaSmart",
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body>
+        <ServiceWorkerRegistration />
         <Navbar />
         {children}
       </body>
