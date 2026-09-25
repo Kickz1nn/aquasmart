@@ -29,21 +29,50 @@
 .list {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     margin-top: 32px;
 }
 
 .bath {
-    padding: 22px 24px;
+    overflow: hidden;
 
-    border: 1px solid rgba(255, 255, 255, 0.9);
-    border-radius: 18px;
+    border: 1px solid #dcebea;
+    border-radius: 16px;
 
     background: rgba(255, 255, 255, 0.82);
 
-    box-shadow: 0 12px 35px rgba(30, 93, 100, 0.09);
+    box-shadow: 0 8px 25px rgba(30, 93, 100, 0.07);
 
     backdrop-filter: blur(12px);
+
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.bath:hover {
+    border-color: #c5dfde;
+    box-shadow: 0 10px 30px rgba(30, 93, 100, 0.1);
+}
+
+.bath.expanded {
+    border-color: #b8d9d8;
+}
+
+.bathButton {
+    width: 100%;
+
+    padding: 20px 24px;
+
+    border: 0;
+    background: transparent;
+
+    color: inherit;
+    font: inherit;
+
+    text-align: left;
+
+    cursor: pointer;
 }
 
 .bathHeader {
@@ -55,49 +84,99 @@
 
 .bathHeader h2 {
     color: #143b46;
-    font-size: 18px;
+    font-size: 17px;
+    font-weight: 700;
 }
 
 .bathHeader span {
     display: block;
-    margin-top: 5px;
+    margin-top: 4px;
 
-    color: #52727a;
+    color: #6b878d;
     font-size: 13px;
 }
 
-.bathHeader > strong {
+.cost {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.cost strong {
     color: #127e83;
-    font-size: 20px;
+    font-size: 18px;
+}
+
+.cost span {
+    margin: 0;
+
+    color: #127e83;
+    font-size: 11px;
 }
 
 .data {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    display: flex;
+    gap: 40px;
 
-    margin-top: 20px;
-    padding-top: 18px;
+    margin-top: 16px;
+    padding-top: 14px;
 
-    border-top: 1px solid #dcebea;
+    border-top: 1px solid #e2eeee;
 }
 
 .data div {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    align-items: center;
+    gap: 8px;
 }
 
 .data span {
-    color: #52727a;
+    color: #6b878d;
     font-size: 12px;
-    font-weight: 600;
 }
 
 .data strong {
     color: #315861;
-    font-size: 15px;
+    font-size: 14px;
 }
+
+/* Detalhes */
+
+.details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    margin: 0 24px;
+    padding: 16px 0 20px;
+
+    border-top: 1px solid #e2eeee;
+}
+
+.detail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 0 16px;
+
+    border-right: 1px solid #e2eeee;
+}
+
+.detail:nth-child(3n) {
+    border-right: none;
+}
+
+.detail span {
+    color: #6b878d;
+    font-size: 11px;
+}
+
+.detail strong {
+    color: #315861;
+    font-size: 14px;
+}
+
+/* Mobile */
 
 @media (max-width: 520px) {
     .container {
@@ -108,7 +187,7 @@
         font-size: 30px;
     }
 
-    .bath {
+    .bathButton {
         padding: 18px;
     }
 
@@ -117,6 +196,18 @@
     }
 
     .data {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .details {
+        grid-template-columns: 1fr 1fr;
+
+        margin: 0 18px;
+    }
+
+    .detail {
+        padding: 8px 12px;
+        border-right: none;
     }
 }
