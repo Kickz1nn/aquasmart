@@ -4,6 +4,22 @@
     margin-top: 24px;
 }
 
+.chartContainer svg {
+    outline: none;
+}
+
+.chartContainer svg:focus {
+    outline: none;
+}
+
+.chartContainer *:focus {
+    outline: none;
+}
+
+.chartContainer * {
+    outline: none;
+}
+
 @media (max-width: 520px) {
     .chartContainer {
         height: 260px;
