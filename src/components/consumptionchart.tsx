@@ -18,28 +18,57 @@ type ConsumptionData = {
 type ConsumptionChartProps = {
     data: ConsumptionData[];
     unit: string;
+    color: string;
 };
 
 export default function ConsumptionChart({
     data,
     unit,
+    color,
 }: ConsumptionChartProps) {
     return (
-        <div style={{ width: "100%", height: 320 }}>
+        <div className="chartContainer">
             <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <Tooltip
-                        formatter={(value) => [`${value} ${unit}`, "Consumo"]}
+                <LineChart
+                    data={data}
+                    margin={{
+                        top: 20,
+                        right: 10,
+                        left: 0,
+                        bottom: 5,
+                    }}
+                >
+                    <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
                     />
+
+                    <XAxis
+                        dataKey="month"
+                        tickLine={false}
+                        axisLine={false}
+                    />
+
+                    <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => `${value} ${unit}`}
+                    />
+
+                    <Tooltip
+                        formatter={(value) => [
+                            `${value} ${unit}`,
+                            "Consumo",
+                        ]}
+                    />
+
                     <Line
                         type="monotone"
                         dataKey="consumption"
-                        stroke="#127e83"
+                        stroke={color}
                         strokeWidth={3}
                         dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
                     />
                 </LineChart>
             </ResponsiveContainer>
