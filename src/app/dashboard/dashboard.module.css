@@ -59,16 +59,38 @@
     backdrop-filter: blur(16px);
 }
 
-.card p {
-    margin-bottom: 12px;
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cardHeader p {
+    margin: 0;
 
     color: #52727a;
     font-size: 14px;
     font-weight: 600;
 }
 
+.cardIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 12px;
+
+    background: #e8f6f4;
+
+    font-size: 20px;
+}
+
 .card strong {
     display: block;
+    margin-top: 16px;
 
     color: #143b46;
     font-size: clamp(26px, 4vw, 34px);
@@ -76,7 +98,7 @@
     letter-spacing: -0.5px;
 }
 
-.card span {
+.cardVariation {
     display: block;
     margin-top: 10px;
 
@@ -85,10 +107,11 @@
     font-weight: 600;
 }
 
-/* Área do gráfico */
+/* Área dos gráficos */
 
 .chartCard {
     padding: 28px;
+    margin-bottom: 24px;
 
     border: 1px solid rgba(255, 255, 255, 0.9);
     border-radius: 20px;
@@ -111,25 +134,10 @@
 }
 
 .chartCard h2 {
+    margin: 0;
+
     color: #143b46;
     font-size: 24px;
-}
-
-/* Placeholder temporário */
-
-.chartPlaceholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    height: 300px;
-    margin-top: 24px;
-
-    border: 1px dashed #c8dedd;
-    border-radius: 14px;
-
-    color: #9eb7b7;
-    font-size: 14px;
 }
 
 /* Tablet */
@@ -169,12 +177,16 @@
         padding: 20px;
     }
 
-    .chartCard {
-        padding: 20px;
+    .card strong {
+        font-size: 28px;
     }
 
-    .chartPlaceholder {
-        height: 240px;
-        margin-top: 20px;
+    .chartCard {
+        padding: 20px;
+        margin-bottom: 18px;
+    }
+
+    .chartCard h2 {
+        font-size: 21px;
     }
 }

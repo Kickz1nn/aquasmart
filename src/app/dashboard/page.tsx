@@ -32,21 +32,40 @@ export default function Dashboard() {
 
             <section className={styles.summary}>
                 <div className={styles.card}>
-                    <p>Água</p>
+                    <div className={styles.cardHeader}>
+                        <p>Água</p>
+                        <span className={styles.cardIcon}>💧</span>
+                    </div>
+
                     <strong>156,4 L</strong>
-                    <span>↓ 8,2% este mês</span>
-                </div>
 
+                    <span className={styles.cardVariation}>
+                        ↓ 8,2% este mês
+                    </span>
+                </div>
                 <div className={styles.card}>
-                    <p>Energia</p>
+                    <div className={styles.cardHeader}>
+                        <p>Energia</p>
+                        <span className={styles.cardIcon}>⚡</span>
+                    </div>
+
                     <strong>2,41 kWh</strong>
-                    <span>↓ 5,7% este mês</span>
-                </div>
 
+                    <span className={styles.cardVariation}>
+                        ↓ 5,7% este mês
+                    </span>
+                </div>
                 <div className={styles.card}>
-                    <p>Duração média</p>
+                    <div className={styles.cardHeader}>
+                        <p>Duração média</p>
+                        <span className={styles.cardIcon}>⏱</span>
+                    </div>
+
                     <strong>05:42</strong>
-                    <span>↓ 12s este mês</span>
+
+                    <span className={styles.cardVariation}>
+                        ↓ 12s este mês
+                    </span>
                 </div>
             </section>
 
