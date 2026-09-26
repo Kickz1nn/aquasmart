@@ -1,4 +1,23 @@
 import styles from "./dashboard.module.css";
+import ConsumptionChart from "@/components/consumptionchart";
+
+const waterData = [
+    { month: "Jan", consumption: 120 },
+    { month: "Fev", consumption: 135 },
+    { month: "Mar", consumption: 128 },
+    { month: "Abr", consumption: 142 },
+    { month: "Mai", consumption: 156 },
+    { month: "Jun", consumption: 149 },
+];
+
+const energyData = [
+    { month: "Jan", consumption: 1.82 },
+    { month: "Fev", consumption: 2.05 },
+    { month: "Mar", consumption: 1.94 },
+    { month: "Abr", consumption: 2.21 },
+    { month: "Mai", consumption: 2.48 },
+    { month: "Jun", consumption: 2.41 },
+];
 
 export default function Dashboard() {
     return (
@@ -33,13 +52,25 @@ export default function Dashboard() {
 
             <section className={styles.chartCard}>
                 <div>
-                    <p>Consumo mensal</p>
-                    <h2>Comparativo</h2>
+                    <p>Consumo de água</p>
+                    <h2>Consumo mensal</h2>
                 </div>
 
-                <div className={styles.chartPlaceholder}>
-                    Gráfico
+                <ConsumptionChart
+                    data={waterData}
+                    unit="L"
+                />
+            </section>
+            <section className={styles.chartCard}>
+                <div>
+                    <p>Consumo de energia</p>
+                    <h2>Consumo mensal</h2>
                 </div>
+
+                <ConsumptionChart
+                    data={energyData}
+                    unit="kWh"
+                />
             </section>
         </main>
     );
