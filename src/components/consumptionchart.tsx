@@ -10,6 +10,8 @@ import {
     ResponsiveContainer,
 } from "recharts";
 
+import styles from "./consumptionchart.module.css";
+
 type ConsumptionData = {
     month: string;
     consumption: number;
@@ -27,14 +29,14 @@ export default function ConsumptionChart({
     color,
 }: ConsumptionChartProps) {
     return (
-        <div className="chartContainer">
+        <div className={styles.chartContainer}>
             <ResponsiveContainer width="100%" height="100%">
                 <LineChart
                     data={data}
                     margin={{
                         top: 20,
                         right: 10,
-                        left: 0,
+                        left: 10,
                         bottom: 5,
                     }}
                 >
