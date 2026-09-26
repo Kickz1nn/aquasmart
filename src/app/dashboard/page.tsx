@@ -59,6 +59,7 @@ export default function Dashboard() {
                 <ConsumptionChart
                     data={waterData}
                     unit="L"
+                    color="#127e83"
                 />
             </section>
             <section className={styles.chartCard}>
@@ -70,6 +71,7 @@ export default function Dashboard() {
                 <ConsumptionChart
                     data={energyData}
                     unit="kWh"
+                    color="#d28b32"
                 />
             </section>
         </main>
