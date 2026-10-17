@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 
 export const sessionsRepository = {
@@ -34,12 +33,12 @@ export const sessionsRepository = {
     });
   },
 
-  finish(id: string, durationSeconds: number) {
+  finish(id: string, finishedAt: Date, durationSeconds: number) {
     return prisma.session.update({
       where: { id },
       data: {
         status: "COMPLETED",
-        finishedAt: new Date(),
+        finishedAt,
         durationSeconds,
       },
     });
