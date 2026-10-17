@@ -25,6 +25,10 @@ export const sessionsService = {
     return session;
   },
 
+  async getAll() {
+    return sessionsRepository.findAll();
+  },
+
   async finish(id: string) {
     const session = await sessionsRepository.findById(id);
 

@@ -33,6 +33,14 @@ export const sessionsRepository = {
     });
   },
 
+  findAll() {
+    return prisma.session.findMany({
+      orderBy: {
+        startedAt: "desc",
+      },
+    });
+  },
+
   finish(id: string, finishedAt: Date, durationSeconds: number) {
     return prisma.session.update({
       where: { id },

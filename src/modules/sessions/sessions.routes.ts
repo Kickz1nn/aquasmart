@@ -37,4 +37,17 @@ export const sessionsRoutes = {
       );
     }
   },
+
+  async getAll() {
+    try {
+      const sessions = await sessionsService.getAll();
+
+      return NextResponse.json({ data: sessions });
+    } catch {
+      return NextResponse.json(
+        { error: "Não foi possível consultar o histórico." },
+        { status: 500 }
+      );
+    }
+  },
 };
