@@ -30,10 +30,66 @@ type Settings = {
     energyCostPerKwh: number;
 };
 
-function formatDate(value: string) {
+type BathGroup = {
+    key: string;
+    label: string;
+    baths: Bath[];
+};
+
+function getDateKey(value: string) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(new Date(value));
+
+    const values = Object.fromEntries(
+        parts.map((part) => [part.type, part.value])
+    );
+
+    return `${values.year}-${values.month}-${values.day}`;
+}
+
+function formatGroupDate(value: string) {
+    const today = getDateKey(new Date().toISOString());
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = getDateKey(yesterdayDate.toISOString());
+
+    const date = new Date(`${value}T12:00:00`);
+
+    const formattedDate = new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+    }).format(date);
+
+    if (value === today) {
+        return `Hoje · ${new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            day: "2-digit",
+            month: "long",
+        }).format(date)}`;
+    }
+
+    if (value === yesterday) {
+        return `Ontem · ${new Intl.DateTimeFormat("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            day: "2-digit",
+            month: "long",
+        }).format(date)}`;
+    }
+
+    return formattedDate;
+}
+
+function formatTime(value: string) {
     return new Intl.DateTimeFormat("pt-BR", {
         timeZone: "America/Sao_Paulo",
-        dateStyle: "short",
+        hour: "2-digit",
+        minute: "2-digit",
     }).format(new Date(value));
 }
 
@@ -50,6 +106,13 @@ function formatMoney(value: number) {
     return value.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
+    });
+}
+
+function formatNumber(value: number, digits: number) {
+    return value.toLocaleString("pt-BR", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
     });
 }
 
@@ -134,6 +197,24 @@ export default function HistoryList() {
         }
     }
 
+    const groups: BathGroup[] = Object.values(
+        baths.reduce<Record<string, BathGroup>>((result, bath) => {
+            const key = getDateKey(bath.startedAt);
+
+            if (!result[key]) {
+                result[key] = {
+                    key,
+                    label: formatGroupDate(key),
+                    baths: [],
+                };
+            }
+
+            result[key].baths.push(bath);
+
+            return result;
+        }, {})
+    );
+
     return (
         <section className={styles.container}>
             <div className={styles.header}>
@@ -166,142 +247,156 @@ export default function HistoryList() {
 
             {!loading && !error && baths.length > 0 && (
                 <div className={styles.list}>
-                    {baths.map((bath) => {
-                        const totalWaterCost = settings
-                            ? (bath.totalWaterLiters / 1000) * settings.waterCostPerM3
-                            : null;
+                    {groups.map((group) => (
+                        <section className={styles.group} key={group.key}>
+                            <div className={styles.groupHeader}>
+                                <h2>{group.label}</h2>
+                                <span>
+                                    {group.baths.length}{" "}
+                                    {group.baths.length === 1 ? "banho" : "banhos"}
+                                </span>
+                            </div>
 
-                        const totalEnergyCost = settings
-                            ? bath.energyKwh * settings.energyCostPerKwh
-                            : null;
+                            <div className={styles.groupList}>
+                                {group.baths.map((bath) => {
+                                    const totalWaterCost = settings
+                                        ? (bath.totalWaterLiters / 1000) * settings.waterCostPerM3
+                                        : null;
 
-                        const totalCost =
-                            totalWaterCost !== null && totalEnergyCost !== null
-                                ? totalWaterCost + totalEnergyCost
-                                : null;
+                                    const totalEnergyCost = settings
+                                        ? bath.energyKwh * settings.energyCostPerKwh
+                                        : null;
 
-                        const isExpanded = expandedBath === bath.id;
-                        const details = bathDetails[bath.id];
-                        const powerWatts = details?.measurements.length
-                            ? details.measurements[details.measurements.length - 1].powerWatts
-                            : null;
+                                    const totalCost =
+                                        totalWaterCost !== null && totalEnergyCost !== null
+                                            ? totalWaterCost + totalEnergyCost
+                                            : null;
 
-                        return (
-                            <article
-                                className={`${styles.bath} ${isExpanded ? styles.expanded : ""}`}
-                                key={bath.id}
-                            >
-                                <button
-                                    type="button"
-                                    className={styles.bathButton}
-                                    onClick={() => toggleBath(bath.id)}
-                                    aria-expanded={isExpanded}
-                                >
-                                    <div className={styles.bathHeader}>
-                                        <div>
-                                            <h2>{formatDate(bath.startedAt)}</h2>
-                                            <span>
-                                                ⏱ {formatDuration(bath.durationSeconds)}
-                                            </span>
-                                        </div>
+                                    const isExpanded = expandedBath === bath.id;
+                                    const details = bathDetails[bath.id];
+                                    const powerWatts = details?.measurements.length
+                                        ? details.measurements[details.measurements.length - 1].powerWatts
+                                        : null;
 
-                                        <div className={styles.cost}>
-                                            <strong>
-                                                {totalCost === null
-                                                    ? "Calculando..."
-                                                    : formatMoney(totalCost)}
-                                            </strong>
-                                            <span>{isExpanded ? "▲" : "▼"}</span>
-                                        </div>
-                                    </div>
+                                    return (
+                                        <article
+                                            className={`${styles.bath} ${isExpanded ? styles.expanded : ""}`}
+                                            key={bath.id}
+                                        >
+                                            <button
+                                                type="button"
+                                                className={styles.bathButton}
+                                                onClick={() => toggleBath(bath.id)}
+                                                aria-expanded={isExpanded}
+                                            >
+                                                <div className={styles.bathHeader}>
+                                                    <div>
+                                                        <h3>Banho às {formatTime(bath.startedAt)}</h3>
+                                                        <span>
+                                                            ⏱ {formatDuration(bath.durationSeconds)}
+                                                        </span>
+                                                    </div>
 
-                                    <div className={styles.data}>
-                                        <div>
-                                            <span>Água</span>
-                                            <strong>
-                                                💧 {bath.totalWaterLiters.toFixed(1)} L
-                                            </strong>
-                                        </div>
-
-                                        <div>
-                                            <span>Energia estimada</span>
-                                            <strong>
-                                                ⚡ {bath.energyKwh.toFixed(3)} kWh
-                                            </strong>
-                                        </div>
-                                    </div>
-                                </button>
-
-                                {isExpanded && (
-                                    <div className={styles.details}>
-                                        {loadingDetails === bath.id && (
-                                            <p role="status" className={styles.description}>
-                                                Carregando detalhes...
-                                            </p>
-                                        )}
-
-                                        {detailsError && (
-                                            <p role="alert" className={styles.description}>
-                                                {detailsError}
-                                            </p>
-                                        )}
-
-                                        {details && (
-                                            <>
-                                                <div className={styles.detail}>
-                                                    <span>Consumo de água</span>
-                                                    <strong>
-                                                        {bath.totalWaterLiters.toFixed(1)} L
-                                                    </strong>
+                                                    <div className={styles.cost}>
+                                                        <strong>
+                                                            {totalCost === null
+                                                                ? "Calculando..."
+                                                                : formatMoney(totalCost)}
+                                                        </strong>
+                                                        <span>{isExpanded ? "▲" : "▼"}</span>
+                                                    </div>
                                                 </div>
 
-                                                <div className={styles.detail}>
-                                                    <span>Energia estimada</span>
-                                                    <strong>
-                                                        {bath.energyKwh.toFixed(3)} kWh
-                                                    </strong>
-                                                </div>
+                                                <div className={styles.data}>
+                                                    <div>
+                                                        <span>Água</span>
+                                                        <strong>
+                                                            💧 {formatNumber(bath.totalWaterLiters, 1)} L
+                                                        </strong>
+                                                    </div>
 
-                                                <div className={styles.detail}>
-                                                    <span>Potência registrada</span>
-                                                    <strong>
-                                                        {powerWatts === null
-                                                            ? "Sem medições"
-                                                            : `${powerWatts} W`}
-                                                    </strong>
+                                                    <div>
+                                                        <span>Energia estimada</span>
+                                                        <strong>
+                                                            ⚡ {formatNumber(bath.energyKwh, 3)} kWh
+                                                        </strong>
+                                                    </div>
                                                 </div>
+                                            </button>
 
-                                                <div className={styles.detail}>
-                                                    <span>Custo da água</span>
-                                                    <strong>
-                                                        {totalWaterCost === null
-                                                            ? "—"
-                                                            : formatMoney(totalWaterCost)}
-                                                    </strong>
-                                                </div>
+                                            {isExpanded && (
+                                                <div className={styles.details}>
+                                                    {loadingDetails === bath.id && (
+                                                        <p role="status" className={styles.description}>
+                                                            Carregando detalhes...
+                                                        </p>
+                                                    )}
 
-                                                <div className={styles.detail}>
-                                                    <span>Custo da energia</span>
-                                                    <strong>
-                                                        {totalEnergyCost === null
-                                                            ? "—"
-                                                            : formatMoney(totalEnergyCost)}
-                                                    </strong>
-                                                </div>
+                                                    {detailsError && (
+                                                        <p role="alert" className={styles.description}>
+                                                            {detailsError}
+                                                        </p>
+                                                    )}
 
-                                                <div className={styles.detail}>
-                                                    <span>Duração</span>
-                                                    <strong>
-                                                        {formatDuration(bath.durationSeconds)}
-                                                    </strong>
+                                                    {details && (
+                                                        <>
+                                                            <div className={styles.detail}>
+                                                                <span>Consumo de água</span>
+                                                                <strong>
+                                                                    {formatNumber(bath.totalWaterLiters, 1)} L
+                                                                </strong>
+                                                            </div>
+
+                                                            <div className={styles.detail}>
+                                                                <span>Energia estimada</span>
+                                                                <strong>
+                                                                    {formatNumber(bath.energyKwh, 3)} kWh
+                                                                </strong>
+                                                            </div>
+
+                                                            <div className={styles.detail}>
+                                                                <span>Potência registrada</span>
+                                                                <strong>
+                                                                    {powerWatts === null
+                                                                        ? "Sem medições"
+                                                                        : `${powerWatts} W`}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div className={styles.detail}>
+                                                                <span>Custo da água</span>
+                                                                <strong>
+                                                                    {totalWaterCost === null
+                                                                        ? "—"
+                                                                        : formatMoney(totalWaterCost)}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div className={styles.detail}>
+                                                                <span>Custo da energia</span>
+                                                                <strong>
+                                                                    {totalEnergyCost === null
+                                                                        ? "—"
+                                                                        : formatMoney(totalEnergyCost)}
+                                                                </strong>
+                                                            </div>
+
+                                                            <div className={styles.detail}>
+                                                                <span>Duração</span>
+                                                                <strong>
+                                                                    {formatDuration(bath.durationSeconds)}
+                                                                </strong>
+                                                            </div>
+                                                        </>
+                                                    )}
                                                 </div>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </article>
-                        );
-                    })}
+                                            )}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    ))}
                 </div>
             )}
         </section>
