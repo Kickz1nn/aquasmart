@@ -155,7 +155,12 @@ export const dashboardService = {
         ? {
             id: activeSession.id,
             startedAt: activeSession.startedAt,
-            latestMeasurement: activeSession.measurements[0] ?? null,
+            finishedAt: activeSession.finishedAt,
+            durationSeconds: activeSession.durationSeconds,
+            totalWaterLiters: activeSession.totalWaterLiters,
+            energyKwh: activeSession.energyKwh,
+            status: activeSession.status,
+            measurements: activeSession.measurements,
           }
         : null,
       currentMonth: {

@@ -125,6 +125,7 @@ export default function HistoryList() {
     const [loadingDetails, setLoadingDetails] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [detailsError, setDetailsError] = useState<string | null>(null);
+    const [period, setPeriod] = useState<"all" | "7" | "30">("all");
 
     useEffect(() => {
         let cancelled = false;
@@ -196,9 +197,36 @@ export default function HistoryList() {
             setLoadingDetails(null);
         }
     }
+    const filteredBaths = baths.filter((bath) => {
+        if (period === "all") return true;
+
+        const days = Number(period);
+        const now = new Date();
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - (days - 1));
+        startDate.setHours(0, 0, 0, 0);
+
+        return new Date(bath.startedAt) >= startDate &&
+            new Date(bath.startedAt) <= now;
+    });
+
+    const totalWater = filteredBaths.reduce(
+        (total, bath) => total + bath.totalWaterLiters,
+        0
+    );
+
+    const totalEnergy = filteredBaths.reduce(
+        (total, bath) => total + bath.energyKwh,
+        0
+    );
+
+    const totalEstimatedCost = settings
+    ? (totalWater / 1000) * settings.waterCostPerM3 +
+      totalEnergy * settings.energyCostPerKwh
+    : null;
 
     const groups: BathGroup[] = Object.values(
-        baths.reduce<Record<string, BathGroup>>((result, bath) => {
+        filteredBaths.reduce<Record<string, BathGroup>>((result, bath) => {
             const key = getDateKey(bath.startedAt);
 
             if (!result[key]) {
@@ -217,15 +245,78 @@ export default function HistoryList() {
 
     return (
         <section className={styles.container}>
+            
             <div className={styles.header}>
                 <div>
                     <p className={styles.eyebrow}>AquaSmart</p>
                     <h1>Histórico de banhos</h1>
                     <p className={styles.description}>
-                        Consulte os dados dos seus banhos anteriores.
+                        Consulte seus registros e acompanhe seu consumo ao longo do tempo.
                     </p>
                 </div>
             </div>
+
+            {!loading && !error && (
+                <>
+                    <div className={styles.toolbar} aria-label="Filtrar histórico por período">
+                        {([
+                            { value: "all", label: "Todos" },
+                            { value: "7", label: "7 dias" },
+                            { value: "30", label: "30 dias" },
+                        ] as const).map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                className={`${styles.filterButton} ${
+                                    period === option.value ? styles.filterButtonActive : ""
+                                }`}
+                                onClick={() => setPeriod(option.value)}
+                                aria-pressed={period === option.value}
+                            >
+                                {option.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className={styles.summary}>
+                        <div className={styles.summaryCard}>
+                            <span className={styles.summaryLabel}>Banhos concluídos</span>
+                            <strong className={styles.summaryValue}>
+                                {filteredBaths.length}
+                            </strong>
+                            <span className={styles.summaryUnit}>No período selecionado</span>
+                        </div>
+
+                        <div className={styles.summaryCard}>
+                            <span className={styles.summaryLabel}>Água consumida</span>
+                            <strong className={styles.summaryValue}>
+                                {formatNumber(totalWater, 1)} L
+                            </strong>
+                            <span className={styles.summaryUnit}>Consumo acumulado</span>
+                        </div>
+
+                        <div className={styles.summaryCard}>
+                            <span className={styles.summaryLabel}>Energia estimada</span>
+                            <strong className={styles.summaryValue}>
+                                {formatNumber(totalEnergy, 3)} kWh
+                            </strong>
+                            <span className={styles.summaryUnit}>Energia acumulada</span>
+                        </div>
+                        <div className={styles.summaryCard}>
+                            <span className={styles.summaryLabel}>Custo total estimado</span>
+                            <strong className={styles.summaryValue}>
+                                {totalEstimatedCost === null
+                                    ? "—"
+                                    : formatMoney(totalEstimatedCost)}
+                            </strong>
+                            <span className={styles.summaryUnit}>
+                                Água + energia no período
+                            </span>
+                        </div>
+                    </div>
+                </>
+            )}
+
 
             {loading && (
                 <p role="status" className={styles.description}>
@@ -239,13 +330,15 @@ export default function HistoryList() {
                 </p>
             )}
 
-            {!loading && !error && baths.length === 0 && (
+            {!loading && !error && filteredBaths.length === 0 && (
                 <p className={styles.description}>
-                    Nenhum banho concluído foi registrado ainda.
+                    {baths.length === 0
+                        ? "Nenhum banho concluído foi registrado ainda."
+                        : "Nenhum banho encontrado neste período. Experimente selecionar outro filtro."}
                 </p>
             )}
 
-            {!loading && !error && baths.length > 0 && (
+            {!loading && !error && filteredBaths.length > 0 && (
                 <div className={styles.list}>
                     {groups.map((group) => (
                         <section className={styles.group} key={group.key}>
