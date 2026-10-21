@@ -41,10 +41,11 @@ model Measurement {
 }
 
 model Settings {
-  id                  Int      @id @default(1)
-  waterCostPerM3      Float    @default(0)
-  energyCostPerKwh    Float    @default(0)
-  waterUnit           String   @default("L")
-  energyUnit          String   @default("kWh")
-  updatedAt           DateTime @updatedAt
+  id                    Int      @id @default(1)
+  waterCostPerM3        Float    @default(6.40)
+  energyCostPerKwh      Float    @default(0.892)
+  waterUnit             String   @default("L")
+  energyUnit            String   @default("kWh")
+  targetDurationMinutes Int      @default(8)
+  updatedAt             DateTime @updatedAt
 }
