@@ -1,0 +1,51 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Session {
+  id                String        @id @default(cuid())
+  startedAt         DateTime      @default(now())
+  finishedAt        DateTime?
+  durationSeconds   Int?
+  totalWaterLiters  Float         @default(0)
+  energyKwh         Float         @default(0)
+  status            SessionStatus @default(IN_PROGRESS)
+  measurements      Measurement[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model Measurement {
+  id                  String   @id @default(cuid())
+  sessionId           String
+  measuredAt          DateTime @default(now())
+  flowRateLpm         Float
+  totalVolumeLiters   Float
+  powerWatts          Int
+
+  session             Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, measuredAt])
+}
+
+model Settings {
+  id                    Int      @id @default(1)
+  waterCostPerM3        Float    @default(6.40)
+  energyCostPerKwh      Float    @default(0.892)
+  waterUnit             String   @default("L")
+  energyUnit            String   @default("kWh")
+  targetDurationMinutes Int      @default(8)
+  updatedAt             DateTime @updatedAt
+}

@@ -1,0 +1,3 @@
+ALTER TABLE "Settings" ADD COLUMN     "targetDurationMinutes" INTEGER NOT NULL DEFAULT 8,
+ALTER COLUMN "waterCostPerM3" SET DEFAULT 6.40,
+ALTER COLUMN "energyCostPerKwh" SET DEFAULT 0.892;

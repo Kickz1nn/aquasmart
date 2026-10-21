@@ -78,6 +78,32 @@
     font-weight: 600;
 }
 
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.groupHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.groupHeader strong {
+    color: #143b46;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.groupHeader span {
+    color: #52727a;
+    font-size: 12px;
+}
+
 @media (max-width: 520px) {
     .container {
         width: calc(100% - 32px);
