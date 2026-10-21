@@ -1,25 +1,189 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import styles from "./dashboard.module.css";
 import ConsumptionChart from "@/components/consumptionchart";
 
-const waterData = [
-    { month: "Jan", consumption: 120 },
-    { month: "Fev", consumption: 135 },
-    { month: "Mar", consumption: 128 },
-    { month: "Abr", consumption: 142 },
-    { month: "Mai", consumption: 156 },
-    { month: "Jun", consumption: 149 },
-];
+type MonthSummary = {
+    sessionsCount: number;
+    totalWaterLiters: number;
+    energyKwh: number;
+    durationSeconds: number;
+};
 
-const energyData = [
-    { month: "Jan", consumption: 1.82 },
-    { month: "Fev", consumption: 2.05 },
-    { month: "Mar", consumption: 1.94 },
-    { month: "Abr", consumption: 2.21 },
-    { month: "Mai", consumption: 2.48 },
-    { month: "Jun", consumption: 2.41 },
-];
+type DailyConsumption = {
+    date: string;
+    sessionsCount: number;
+    totalWaterLiters: number;
+    energyKwh: number;
+    durationSeconds: number;
+};
+
+type DashboardData = {
+    activeSession: unknown | null;
+    currentMonth: MonthSummary;
+    previousMonth: MonthSummary;
+    dailyConsumption: DailyConsumption[];
+    recentSessions: unknown[];
+    settings: {
+        waterCostPerM3: number;
+        energyCostPerKwh: number;
+        targetDurationMinutes: number;
+        waterUnit: string;
+        energyUnit: string;
+    };
+};
+
+function formatDuration(seconds: number) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function formatNumber(value: number, maximumFractionDigits = 1) {
+    return value.toLocaleString("pt-BR", {
+        minimumFractionDigits: maximumFractionDigits,
+        maximumFractionDigits,
+    });
+}
+
+function formatMoney(value: number) {
+    return value.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+    });
+}
+
+function getVariation(
+    current: number,
+    previous: number,
+    unit: "percent" | "seconds"
+) {
+    if (previous === 0) {
+        return "Sem dados do mês anterior";
+    }
+
+    const difference = current - previous;
+
+    if (unit === "seconds") {
+        const absoluteDifference = Math.abs(difference);
+        const formattedDifference =
+            absoluteDifference >= 60
+                ? `${Math.floor(absoluteDifference / 60)} min`
+                : `${absoluteDifference} s`;
+
+        if (difference === 0) return "Sem alteração este mês";
+
+        return `${difference < 0 ? "↓" : "↑"} ${formattedDifference} em relação ao mês anterior`;
+    }
+
+    const percentage = (difference / previous) * 100;
+
+    if (percentage === 0) return "Sem alteração este mês";
+
+    return `${percentage < 0 ? "↓" : "↑"} ${formatNumber(Math.abs(percentage), 1)}% em relação ao mês anterior`;
+}
+
+function formatChartDate(date: string) {
+    return new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "UTC",
+        day: "2-digit",
+        month: "short",
+    }).format(new Date(`${date}T12:00:00Z`));
+}
 
 export default function Dashboard() {
+    const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch("/api/dashboard");
+
+                if (!response.ok) {
+                    throw new Error("Não foi possível carregar a dashboard.");
+                }
+
+                const result = await response.json();
+
+                if (!cancelled) {
+                    setDashboard(result.data);
+                }
+            } catch {
+                if (!cancelled) {
+                    setError("Não foi possível carregar os dados. Tente novamente.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            }
+        }
+
+        loadDashboard();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    if (loading) {
+        return (
+            <main className={styles.dashboard}>
+                <p role="status">Carregando dashboard...</p>
+            </main>
+        );
+    }
+
+    if (error || !dashboard) {
+        return (
+            <main className={styles.dashboard}>
+                <p role="alert">
+                    {error ?? "Não foi possível carregar os dados."}
+                </p>
+            </main>
+        );
+    }
+
+    const { currentMonth, previousMonth, dailyConsumption, settings } = dashboard;
+
+    const waterCost =
+        (currentMonth.totalWaterLiters / 1000) * settings.waterCostPerM3;
+
+    const energyCost =
+        currentMonth.energyKwh * settings.energyCostPerKwh;
+
+    const totalEstimatedCost = waterCost + energyCost;
+
+    const averageDuration =
+        currentMonth.sessionsCount > 0
+            ? currentMonth.durationSeconds / currentMonth.sessionsCount
+            : 0;
+
+    const targetDurationSeconds = settings.targetDurationMinutes * 60;
+
+    const durationProgress =
+        targetDurationSeconds > 0
+            ? Math.min((averageDuration / targetDurationSeconds) * 100, 100)
+            : 0;
+
+    const averageIsWithinTarget = averageDuration <= targetDurationSeconds;
+
+    const waterData = dailyConsumption.map((day) => ({
+        month: formatChartDate(day.date),
+        consumption: Number(day.totalWaterLiters.toFixed(2)),
+    }));
+
+    const energyData = dailyConsumption.map((day) => ({
+        month: formatChartDate(day.date),
+        consumption: Number(day.energyKwh.toFixed(4)),
+    }));
+
     return (
         <main className={styles.dashboard}>
             <header className={styles.header}>
@@ -37,34 +201,106 @@ export default function Dashboard() {
                         <span className={styles.cardIcon}>💧</span>
                     </div>
 
-                    <strong>156,4 L</strong>
+                    <strong>{formatNumber(currentMonth.totalWaterLiters)} L</strong>
 
                     <span className={styles.cardVariation}>
-                        ↓ 8,2% este mês
+                        {getVariation(
+                            currentMonth.totalWaterLiters,
+                            previousMonth.totalWaterLiters,
+                            "percent"
+                        )}
                     </span>
                 </div>
+
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
-                        <p>Energia</p>
+                        <p>Energia estimada</p>
                         <span className={styles.cardIcon}>⚡</span>
                     </div>
 
-                    <strong>2,41 kWh</strong>
+                    <strong>{formatNumber(currentMonth.energyKwh, 3)} kWh</strong>
 
                     <span className={styles.cardVariation}>
-                        ↓ 5,7% este mês
+                        {getVariation(
+                            currentMonth.energyKwh,
+                            previousMonth.energyKwh,
+                            "percent"
+                        )}
                     </span>
                 </div>
+
                 <div className={styles.card}>
                     <div className={styles.cardHeader}>
                         <p>Duração média</p>
                         <span className={styles.cardIcon}>⏱</span>
                     </div>
 
-                    <strong>05:42</strong>
+                    <strong>
+                        {currentMonth.sessionsCount > 0
+                            ? formatDuration(Math.round(averageDuration))
+                            : "00:00"}
+                    </strong>
 
                     <span className={styles.cardVariation}>
-                        ↓ 12s este mês
+                        {getVariation(
+                            averageDuration,
+                            previousMonth.sessionsCount > 0
+                                ? previousMonth.durationSeconds /
+                                      previousMonth.sessionsCount
+                                : 0,
+                            "seconds"
+                        )}
+                    </span>
+                </div>
+            </section>
+
+            <section className={styles.summary}>
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <p>Custo estimado do mês</p>
+                        <span className={styles.cardIcon}>💰</span>
+                    </div>
+
+                    <strong>{formatMoney(totalEstimatedCost)}</strong>
+
+                    <span className={styles.cardVariation}>
+                        Água: {formatMoney(waterCost)} · Energia: {formatMoney(energyCost)}
+                    </span>
+                </div>
+
+                <div className={styles.card}>
+                    <div className={styles.cardHeader}>
+                        <p>Meta de duração</p>
+                        <span className={styles.cardIcon}>🎯</span>
+                    </div>
+
+                    <strong>
+                        {currentMonth.sessionsCount > 0
+                            ? formatDuration(Math.round(averageDuration))
+                            : "00:00"}
+                    </strong>
+
+                    <span className={styles.cardVariation}>
+                        Meta: {settings.targetDurationMinutes} min
+                    </span>
+
+                    <div className={styles.progressTrack}>
+                        <div
+                            className={`${styles.progressBar} ${
+                                averageIsWithinTarget
+                                    ? styles.progressGood
+                                    : styles.progressWarning
+                            }`}
+                            style={{ width: `${durationProgress}%` }}
+                        />
+                    </div>
+
+                    <span className={styles.cardVariation}>
+                        {currentMonth.sessionsCount === 0
+                            ? "Nenhum banho registrado neste mês"
+                            : averageIsWithinTarget
+                              ? "Média dentro da meta"
+                              : "Média acima da meta"}
                     </span>
                 </div>
             </section>
@@ -72,26 +308,35 @@ export default function Dashboard() {
             <section className={styles.chartCard}>
                 <div>
                     <p>Consumo de água</p>
-                    <h2>Consumo mensal</h2>
+                    <h2>Consumo diário no mês</h2>
                 </div>
 
-                <ConsumptionChart
-                    data={waterData}
-                    unit="L"
-                    color="#127e83"
-                />
+                {waterData.length > 0 ? (
+                    <ConsumptionChart
+                        data={waterData}
+                        unit="L"
+                        color="#127e83"
+                    />
+                ) : (
+                    <p>Nenhum consumo registrado neste mês.</p>
+                )}
             </section>
+
             <section className={styles.chartCard}>
                 <div>
                     <p>Consumo de energia</p>
-                    <h2>Consumo mensal</h2>
+                    <h2>Energia estimada diária no mês</h2>
                 </div>
 
-                <ConsumptionChart
-                    data={energyData}
-                    unit="kWh"
-                    color="#d28b32"
-                />
+                {energyData.length > 0 ? (
+                    <ConsumptionChart
+                        data={energyData}
+                        unit="kWh"
+                        color="#d28b32"
+                    />
+                ) : (
+                    <p>Nenhum consumo registrado neste mês.</p>
+                )}
             </section>
         </main>
     );
