@@ -337,4 +337,4 @@ A integração com o hardware depende da implementação e validação dos compo
 
 ## Licença
 
-Nenhuma licença de código aberto foi especificada neste repositório até o momento. Consulte as informações do projeto antes de reutilizar ou distribuir o código.
+Este projeto está licenciado sob a licença MIT. Consulte o arquivo [LICENSE](LICENSE) para obter mais informações.
