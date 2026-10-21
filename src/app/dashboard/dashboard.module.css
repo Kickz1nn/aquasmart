@@ -143,6 +143,77 @@
     font-size: 24px;
 }
 
+
+.emptyComparison {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 220px;
+    margin-top: 24px;
+    padding: 28px 24px;
+    border: 1px dashed #b8d8d5;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #f5fbfa, #edf7f6);
+    text-align: center;
+}
+
+.emptyComparisonIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: #dcefeb;
+    font-size: 26px;
+}
+
+.emptyComparison h3 {
+    margin: 0;
+    color: #143b46;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.emptyComparison p {
+    max-width: 420px;
+    margin: 0;
+    color: #52727a;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.emptyComparison span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #e0f2ef;
+    color: #127e83;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+@media (max-width: 520px) {
+    .emptyComparison {
+        min-height: 200px;
+        padding: 24px 16px;
+    }
+
+    .emptyComparison h3 {
+        font-size: 16px;
+    }
+
+    .emptyComparison p {
+        font-size: 13px;
+    }
+}
+
+
 @media (max-width: 800px) {
     .dashboard {
         width: min(100% - 32px, 700px);

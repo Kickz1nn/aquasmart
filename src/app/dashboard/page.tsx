@@ -24,6 +24,7 @@ type DashboardData = {
     currentMonth: MonthSummary;
     previousMonth: MonthSummary;
     dailyConsumption: DailyConsumption[];
+    previousDailyConsumption: DailyConsumption[];
     recentSessions: unknown[];
     settings: {
         waterCostPerM3: number;
@@ -61,7 +62,7 @@ function getVariation(
     unit: "percent" | "seconds"
 ) {
     if (previous === 0) {
-        return "Sem dados do mês anterior";
+        return "Sem dados do mês anterior para comparar";
     }
 
     const difference = current - previous;
@@ -73,14 +74,14 @@ function getVariation(
                 ? `${Math.floor(absoluteDifference / 60)} min`
                 : `${absoluteDifference} s`;
 
-        if (difference === 0) return "Sem alteração este mês";
+        if (difference === 0) return "Sem alteração em relação ao mês anterior";
 
         return `${difference < 0 ? "↓" : "↑"} ${formattedDifference} em relação ao mês anterior`;
     }
 
     const percentage = (difference / previous) * 100;
 
-    if (percentage === 0) return "Sem alteração este mês";
+    if (percentage === 0) return "Sem alteração em relação ao mês anterior";
 
     return `${percentage < 0 ? "↓" : "↑"} ${formatNumber(Math.abs(percentage), 1)}% em relação ao mês anterior`;
 }
@@ -91,6 +92,56 @@ function formatChartDate(date: string) {
         day: "2-digit",
         month: "short",
     }).format(new Date(`${date}T12:00:00Z`));
+}
+
+function getDayOfMonth(date: string) {
+    return Number(date.slice(8, 10));
+}
+
+function formatDay(day: number) {
+    return String(day).padStart(2, "0");
+}
+
+function getMonthName(date: Date) {
+    return new Intl.DateTimeFormat("pt-BR", {
+        month: "long",
+        year: "numeric",
+        timeZone: "America/Sao_Paulo",
+    }).format(date);
+}
+
+function getComparisonData(
+    currentData: DailyConsumption[],
+    previousData: DailyConsumption[],
+    field: "totalWaterLiters" | "energyKwh"
+) {
+    const currentByDay = new Map(
+        currentData.map((day) => [
+            getDayOfMonth(day.date),
+            day[field],
+        ])
+    );
+
+    const previousByDay = new Map(
+        previousData.map((day) => [
+            getDayOfMonth(day.date),
+            day[field],
+        ])
+    );
+
+    const days = Array.from(
+        new Set([...currentByDay.keys(), ...previousByDay.keys()])
+    ).sort((a, b) => a - b);
+
+    return days.map((day) => ({
+        month: formatDay(day),
+        currentMonth: currentByDay.has(day)
+            ? Number(currentByDay.get(day)!.toFixed(4))
+            : undefined,
+        previousMonth: previousByDay.has(day)
+            ? Number(previousByDay.get(day)!.toFixed(4))
+            : undefined,
+    }));
 }
 
 export default function Dashboard() {
@@ -150,7 +201,13 @@ export default function Dashboard() {
         );
     }
 
-    const { currentMonth, previousMonth, dailyConsumption, settings } = dashboard;
+    const {
+        currentMonth,
+        previousMonth,
+        dailyConsumption,
+        previousDailyConsumption,
+        settings,
+    } = dashboard;
 
     const waterCost =
         (currentMonth.totalWaterLiters / 1000) * settings.waterCostPerM3;
@@ -184,6 +241,27 @@ export default function Dashboard() {
         consumption: Number(day.energyKwh.toFixed(4)),
     }));
 
+    const waterComparisonData = getComparisonData(
+        dailyConsumption,
+        previousDailyConsumption,
+        "totalWaterLiters"
+    );
+
+    const energyComparisonData = getComparisonData(
+        dailyConsumption,
+        previousDailyConsumption,
+        "energyKwh"
+    );
+
+    const now = new Date();
+    const currentMonthName = getMonthName(now);
+    const previousMonthDate = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1
+    );
+    const previousMonthName = getMonthName(previousMonthDate);
+
     return (
         <main className={styles.dashboard}>
             <header className={styles.header}>
@@ -200,15 +278,16 @@ export default function Dashboard() {
                         <p>Água</p>
                         <span className={styles.cardIcon}>💧</span>
                     </div>
-
                     <strong>{formatNumber(currentMonth.totalWaterLiters)} L</strong>
-
                     <span className={styles.cardVariation}>
                         {getVariation(
                             currentMonth.totalWaterLiters,
                             previousMonth.totalWaterLiters,
                             "percent"
                         )}
+                    </span>
+                    <span className={styles.cardVariation}>
+                        Mês atual acumulado · mês anterior completo
                     </span>
                 </div>
 
@@ -217,15 +296,16 @@ export default function Dashboard() {
                         <p>Energia estimada</p>
                         <span className={styles.cardIcon}>⚡</span>
                     </div>
-
                     <strong>{formatNumber(currentMonth.energyKwh, 3)} kWh</strong>
-
                     <span className={styles.cardVariation}>
                         {getVariation(
                             currentMonth.energyKwh,
                             previousMonth.energyKwh,
                             "percent"
                         )}
+                    </span>
+                    <span className={styles.cardVariation}>
+                        Mês atual acumulado · mês anterior completo
                     </span>
                 </div>
 
@@ -234,19 +314,17 @@ export default function Dashboard() {
                         <p>Duração média</p>
                         <span className={styles.cardIcon}>⏱</span>
                     </div>
-
                     <strong>
                         {currentMonth.sessionsCount > 0
                             ? formatDuration(Math.round(averageDuration))
                             : "00:00"}
                     </strong>
-
                     <span className={styles.cardVariation}>
                         {getVariation(
                             averageDuration,
                             previousMonth.sessionsCount > 0
                                 ? previousMonth.durationSeconds /
-                                      previousMonth.sessionsCount
+                                  previousMonth.sessionsCount
                                 : 0,
                             "seconds"
                         )}
@@ -260,9 +338,7 @@ export default function Dashboard() {
                         <p>Custo estimado do mês</p>
                         <span className={styles.cardIcon}>💰</span>
                     </div>
-
                     <strong>{formatMoney(totalEstimatedCost)}</strong>
-
                     <span className={styles.cardVariation}>
                         Água: {formatMoney(waterCost)} · Energia: {formatMoney(energyCost)}
                     </span>
@@ -273,17 +349,14 @@ export default function Dashboard() {
                         <p>Meta de duração</p>
                         <span className={styles.cardIcon}>🎯</span>
                     </div>
-
                     <strong>
                         {currentMonth.sessionsCount > 0
                             ? formatDuration(Math.round(averageDuration))
                             : "00:00"}
                     </strong>
-
                     <span className={styles.cardVariation}>
                         Meta: {settings.targetDurationMinutes} min
                     </span>
-
                     <div className={styles.progressTrack}>
                         <div
                             className={`${styles.progressBar} ${
@@ -294,7 +367,6 @@ export default function Dashboard() {
                             style={{ width: `${durationProgress}%` }}
                         />
                     </div>
-
                     <span className={styles.cardVariation}>
                         {currentMonth.sessionsCount === 0
                             ? "Nenhum banho registrado neste mês"
@@ -310,13 +382,8 @@ export default function Dashboard() {
                     <p>Consumo de água</p>
                     <h2>Consumo diário no mês</h2>
                 </div>
-
                 {waterData.length > 0 ? (
-                    <ConsumptionChart
-                        data={waterData}
-                        unit="L"
-                        color="#127e83"
-                    />
+                    <ConsumptionChart data={waterData} unit="L" color="#127e83" />
                 ) : (
                     <p>Nenhum consumo registrado neste mês.</p>
                 )}
@@ -327,15 +394,68 @@ export default function Dashboard() {
                     <p>Consumo de energia</p>
                     <h2>Energia estimada diária no mês</h2>
                 </div>
-
                 {energyData.length > 0 ? (
-                    <ConsumptionChart
-                        data={energyData}
-                        unit="kWh"
-                        color="#d28b32"
-                    />
+                    <ConsumptionChart data={energyData} unit="kWh" color="#d28b32" />
                 ) : (
                     <p>Nenhum consumo registrado neste mês.</p>
+                )}
+            </section>
+
+            <section className={styles.chartCard}>
+                <div>
+                    <p>Comparação mensal · água</p>
+                    <h2>Consumo diário por dia do mês</h2>
+                    <span className={styles.cardVariation}>
+                        {currentMonthName} (acumulado) × {previousMonthName} (completo)
+                    </span>
+                </div>
+                {previousDailyConsumption.length > 0 ? (
+                    <ConsumptionChart
+                        data={waterComparisonData}
+                        unit="L"
+                        color="#127e83"
+                        comparison
+                    />
+                ) : (                   
+                    <div className={styles.emptyComparison}>
+                        <div className={styles.emptyComparisonIcon}>💧</div>
+                        <h3>Sem dados para comparar</h3>
+                        <p>
+                            Ainda não há banhos registrados em {previousMonthName}.
+                            Quando houver dados desse período, você poderá comparar o consumo
+                            de água entre os meses.
+                        </p>
+                        <span>Comparação mensal indisponível</span>
+                    </div>
+                )}
+            </section>
+
+            <section className={styles.chartCard}>
+                <div>
+                    <p>Comparação mensal · energia</p>
+                    <h2>Energia estimada diária por dia do mês</h2>
+                    <span className={styles.cardVariation}>
+                        {currentMonthName} (acumulado) × {previousMonthName} (completo)
+                    </span>
+                </div>
+                {previousDailyConsumption.length > 0 ? (
+                    <ConsumptionChart
+                        data={energyComparisonData}
+                        unit="kWh"
+                        color="#d28b32"
+                        comparison
+                    />
+                ) : (  
+                    <div className={styles.emptyComparison}>
+                        <div className={styles.emptyComparisonIcon}>⚡</div>
+                        <h3>Sem dados para comparar</h3>
+                        <p>
+                            Ainda não há banhos registrados em {previousMonthName}.
+                            Quando houver dados desse período, você poderá comparar a energia
+                            estimada entre os meses.
+                        </p>
+                        <span>Comparação mensal indisponível</span>
+                    </div>
                 )}
             </section>
         </main>

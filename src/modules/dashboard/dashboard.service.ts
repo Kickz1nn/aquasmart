@@ -9,23 +9,11 @@ function getSaoPauloMonthBoundaries(now: Date) {
     month: "2-digit",
   }).formatToParts(now);
 
-  const year = Number(
-    parts.find((part) => part.type === "year")!.value
-  );
-  const month = Number(
-    parts.find((part) => part.type === "month")!.value
-  );
+  const year = Number(parts.find((part) => part.type === "year")!.value);
+  const month = Number(parts.find((part) => part.type === "month")!.value);
 
-  function getLocalMidnightUtc(
-    targetYear: number,
-    targetMonth: number
-  ) {
-    const targetUtc = Date.UTC(
-      targetYear,
-      targetMonth - 1,
-      1
-    );
-
+  function getLocalMidnightUtc(targetYear: number, targetMonth: number) {
+    const targetUtc = Date.UTC(targetYear, targetMonth - 1, 1);
     let timestamp = targetUtc;
 
     for (let i = 0; i < 3; i++) {
@@ -66,9 +54,53 @@ function getSaoPauloMonthBoundaries(now: Date) {
   };
 }
 
+function groupDailyConsumption(
+  sessions: Awaited<
+    ReturnType<typeof dashboardRepository.findCompletedSessionsBetween>
+  >
+) {
+  const dailyConsumption = new Map<
+    string,
+    {
+      date: string;
+      sessionsCount: number;
+      totalWaterLiters: number;
+      energyKwh: number;
+      durationSeconds: number;
+    }
+  >();
+
+  for (const session of sessions) {
+    const date = new Intl.DateTimeFormat("en-CA", {
+      timeZone: TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(session.startedAt);
+
+    const daily = dailyConsumption.get(date) ?? {
+      date,
+      sessionsCount: 0,
+      totalWaterLiters: 0,
+      energyKwh: 0,
+      durationSeconds: 0,
+    };
+
+    daily.sessionsCount += 1;
+    daily.totalWaterLiters += session.totalWaterLiters;
+    daily.energyKwh += session.energyKwh;
+    daily.durationSeconds += session.durationSeconds ?? 0;
+
+    dailyConsumption.set(date, daily);
+  }
+
+  return Array.from(dailyConsumption.values());
+}
+
 export const dashboardService = {
   async getOverview() {
     const now = new Date();
+
     const {
       startOfMonth,
       startOfNextMonth,
@@ -82,27 +114,27 @@ export const dashboardService = {
       recentSessions,
       settings,
       dailySessions,
+      previousDailySessions,
     ] = await Promise.all([
       dashboardRepository.findActiveSession(),
-      dashboardRepository.findSessionsBetween(
-        startOfMonth,
-        startOfNextMonth
-      ),
+      dashboardRepository.findSessionsBetween(startOfMonth, now),
       dashboardRepository.findSessionsBetween(
         startOfPreviousMonth,
         startOfMonth
       ),
       dashboardRepository.findRecentSessions(),
       dashboardRepository.findSettings(),
+      dashboardRepository.findCompletedSessionsBetween(startOfMonth, now),
       dashboardRepository.findCompletedSessionsBetween(
-        startOfMonth,
-        startOfNextMonth
+        startOfPreviousMonth,
+        startOfMonth
       ),
     ]);
 
     const completedCurrentMonth = currentMonthSessions.filter(
       (session) => session.status === "COMPLETED"
     );
+
     const completedPreviousMonth = previousMonthSessions.filter(
       (session) => session.status === "COMPLETED"
     );
@@ -110,49 +142,13 @@ export const dashboardService = {
     const sum = (
       sessions: typeof completedCurrentMonth,
       field: "totalWaterLiters" | "energyKwh"
-    ) =>
-      sessions.reduce((total, session) => total + session[field], 0);
+    ) => sessions.reduce((total, session) => total + session[field], 0);
 
     const sumDuration = (sessions: typeof completedCurrentMonth) =>
       sessions.reduce(
         (total, session) => total + (session.durationSeconds ?? 0),
         0
       );
-
-    const dailyConsumption = new Map<
-      string,
-      {
-        date: string;
-        sessionsCount: number;
-        totalWaterLiters: number;
-        energyKwh: number;
-        durationSeconds: number;
-      }
-    >();
-
-    for (const session of dailySessions) {
-      const date = new Intl.DateTimeFormat("en-CA", {
-        timeZone: TIME_ZONE,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(session.startedAt);
-
-      const daily = dailyConsumption.get(date) ?? {
-        date,
-        sessionsCount: 0,
-        totalWaterLiters: 0,
-        energyKwh: 0,
-        durationSeconds: 0,
-      };
-
-      daily.sessionsCount += 1;
-      daily.totalWaterLiters += session.totalWaterLiters;
-      daily.energyKwh += session.energyKwh;
-      daily.durationSeconds += session.durationSeconds ?? 0;
-
-      dailyConsumption.set(date, daily);
-    }
 
     return {
       activeSession: activeSession
@@ -164,23 +160,18 @@ export const dashboardService = {
         : null,
       currentMonth: {
         sessionsCount: completedCurrentMonth.length,
-        totalWaterLiters: sum(
-          completedCurrentMonth,
-          "totalWaterLiters"
-        ),
+        totalWaterLiters: sum(completedCurrentMonth, "totalWaterLiters"),
         energyKwh: sum(completedCurrentMonth, "energyKwh"),
         durationSeconds: sumDuration(completedCurrentMonth),
       },
       previousMonth: {
         sessionsCount: completedPreviousMonth.length,
-        totalWaterLiters: sum(
-          completedPreviousMonth,
-          "totalWaterLiters"
-        ),
+        totalWaterLiters: sum(completedPreviousMonth, "totalWaterLiters"),
         energyKwh: sum(completedPreviousMonth, "energyKwh"),
         durationSeconds: sumDuration(completedPreviousMonth),
       },
-      dailyConsumption: Array.from(dailyConsumption.values()),
+      dailyConsumption: groupDailyConsumption(dailySessions),
+      previousDailyConsumption: groupDailyConsumption(previousDailySessions),
       recentSessions,
       settings: {
         waterCostPerM3: settings.waterCostPerM3,
