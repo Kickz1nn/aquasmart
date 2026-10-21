@@ -8,6 +8,8 @@ export const sessionsRoutes = {
 
       return NextResponse.json({ data: session }, { status: 201 });
     } catch (error) {
+      console.error("Erro ao iniciar sessão:", error);
+
       if (
         error instanceof Error &&
         error.message === "Já existe um banho em andamento."
