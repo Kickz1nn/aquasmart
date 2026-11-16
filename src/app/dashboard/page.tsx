@@ -442,7 +442,7 @@ export default function Dashboard() {
                     <ConsumptionChart
                         data={energyComparisonData}
                         unit="kWh"
-                        color="#d28b32"
+                        color="#127e83"
                         comparison
                     />
                 ) : (  
