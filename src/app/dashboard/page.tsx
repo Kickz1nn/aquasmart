@@ -129,42 +129,19 @@ function getComparisonData(
         ])
     );
 
-    const now = new Date();
+    const days = Array.from(
+        new Set([...currentByDay.keys(), ...previousByDay.keys()])
+    ).sort((a, b) => a - b);
 
-    const dateParts = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Sao_Paulo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-    }).formatToParts(now);
-
-    const year = Number(dateParts.find((part) => part.type === "year")!.value);
-    const month = Number(dateParts.find((part) => part.type === "month")!.value);
-    const currentDay = Number(dateParts.find((part) => part.type === "day")!.value);
-
-    const previousMonthDays = new Date(
-        Date.UTC(year, month - 1, 0)
-    ).getUTCDate();
-
-    const totalDays = Math.max(currentDay, previousMonthDays);
-
-    return Array.from({ length: totalDays }, (_, index) => {
-        const day = index + 1;
-
-        return {
-            month: formatDay(day),
-
-            currentMonth:
-                day <= currentDay
-                    ? Number((currentByDay.get(day) ?? 0).toFixed(4))
-                    : null,
-
-            previousMonth:
-                day <= previousMonthDays
-                    ? Number((previousByDay.get(day) ?? 0).toFixed(4))
-                    : null,
-        };
-    });
+    return days.map((day) => ({
+        month: formatDay(day),
+        currentMonth: currentByDay.has(day)
+            ? Number(currentByDay.get(day)!.toFixed(4))
+            : undefined,
+        previousMonth: previousByDay.has(day)
+            ? Number(previousByDay.get(day)!.toFixed(4))
+            : undefined,
+    }));
 }
 
 export default function Dashboard() {
