@@ -16,8 +16,8 @@ import styles from "./consumptionchart.module.css";
 type ConsumptionData = {
     month: string;
     consumption?: number;
-    currentMonth?: number | null;
-    previousMonth?: number | null;
+    currentMonth?: number;
+    previousMonth?: number;
 };
 
 type ConsumptionChartProps = {
